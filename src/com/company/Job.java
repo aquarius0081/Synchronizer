@@ -3,7 +3,7 @@ package com.company;
 import javax.xml.bind.annotation.*;
 
 @XmlRootElement
-@XmlType(propOrder = {"depcode","depjob","description"})
+@XmlType(propOrder = {"depcode", "depjob", "description"})
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Job {
     @XmlTransient

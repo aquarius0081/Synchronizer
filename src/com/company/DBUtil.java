@@ -7,8 +7,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DBUtil
-{
+public class DBUtil {
     public static List<Job> readFromDB() {
         List<Job> jobs = new ArrayList<Job>();
         try {
@@ -22,7 +21,7 @@ public class DBUtil
                 final ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
                 while (rs.next()) {
 
-                    jobs.add(new Job(){{
+                    jobs.add(new Job() {{
                         setDepcode(rs.getString("DepCode"));
                         setDepjob(rs.getString("DepJob"));
                         setDescription(rs.getString("Description"));
