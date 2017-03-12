@@ -1,10 +1,16 @@
 package com.company;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DBUtil
 {
-    public static void testDatabase() {
+    public static List<Job> readFromDB() {
+        List<Job> jobs = new ArrayList<Job>();
         try {
             DriverManager.registerDriver(new com.microsoft.sqlserver.jdbc.SQLServerDriver());
             String url = "jdbc:sqlserver://127.0.0.1\\EMPLOYEESLIST:1433;databaseName=Enterprise";
@@ -13,10 +19,14 @@ public class DBUtil
             Connection con = DriverManager.getConnection(url, login, password);
             try {
                 Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
+                final ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
                 while (rs.next()) {
-                    String str = rs.getString("DepCode");
-                    System.out.println("Contact:" + str);
+
+                    jobs.add(new Job(){{
+                        setDepcode(rs.getString("DepCode"));
+                        setDepjob(rs.getString("DepJob"));
+                        setDescription(rs.getString("Description"));
+                    }});
                 }
                 rs.close();
                 stmt.close();
@@ -26,5 +36,6 @@ public class DBUtil
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return jobs;
     }
 }
