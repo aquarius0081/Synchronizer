@@ -1,10 +1,15 @@
 package com.company;
 
+import org.xml.sax.SAXException;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -40,8 +45,8 @@ public class Main {
         }
     };
 
-    public static void main(String[] args) throws JAXBException {
-        exportToXml();
+    public static void main(String[] args) throws JAXBException, IOException, SAXException, ParserConfigurationException {
+        //exportToXml();
         syncFromXml();
     }
 
@@ -57,12 +62,41 @@ public class Main {
         marshaller.get().marshal(jobs, outXml);
     }
 
-    private static void syncFromXml() throws JAXBException {
-        File inXml = new File("temp/exportedXml.xml");
-        Jobs jobs = (Jobs) unmarshaller.get().unmarshal(inXml);
+    private static void syncFromXml() throws ParserConfigurationException, IOException, SAXException {
+        List jobsFromXml = XMLUtil.readFromXml();
+        List jobsFromDB = DBUtil.readFromDB();
+        List<String> sqlStatements = new ArrayList<String>();
 
-        for (Job job : jobs.getJobs()) {
-            System.out.println("DepCode: " + job.getDepcode() + " DepJob: " + job.getDepjob() + " Description: " + job.getDescription());
-        }
+        //Update
+        jobsFromXml.forEach((x) -> {
+            jobsFromDB.forEach((d) -> {
+                if (((Job) d).getDepcode().equals(((Job) x).getDepcode()) &&
+                        ((Job) d).getDepjob().equals(((Job) x).getDepjob()) &&
+                        !((Job) d).getDescription().equals(((Job) x).getDescription())) {
+                    sqlStatements.add("UPDATE [Enterprise].[dbo].[Job] SET [Description] = ? WHERE DepCode = ? AND DepJob = ?");
+                }
+            });
+        });
+
+        //Insert
+        jobsFromXml.removeIf((x) -> jobsFromDB.stream().anyMatch((d) ->
+            (((Job) d).getDepcode().equals(((Job) x).getDepcode()) &&
+                    ((Job) d).getDepjob().equals(((Job) x).getDepjob()))
+        ));
+        jobsFromXml.forEach((x) -> {
+            sqlStatements.add("INSERT INTO [Enterprise].[dbo].[Job] ([DepCode], [DepJob], [Description]) VALUES (?,?,?)");
+        });
+
+        //Delete
+        jobsFromDB.removeIf((db) -> jobsFromXml.stream().anyMatch((xml) ->
+                (((Job) xml).getDepcode().equals(((Job) db).getDepcode()) &&
+                        ((Job) xml).getDepjob().equals(((Job) db).getDepjob()))
+        ));
+        jobsFromDB.forEach((db) -> {
+            sqlStatements.add("DELETE FROM [Enterprise].[dbo].[Job] WHERE DepCode = ? AND DepJob = ?");
+        });
+
+        sqlStatements.forEach((s) -> System.out.println(s));
     }
+
 }
