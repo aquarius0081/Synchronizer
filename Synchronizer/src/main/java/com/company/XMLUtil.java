@@ -45,6 +45,9 @@ public class XMLUtil {
                     System.out.println(columnNodes.item(j).getNodeName() + " " + columnNodes.item(j).getTextContent());
                 }
             }
+            if (jobsFromXml.stream().anyMatch((j)->(j.getDepcode().equals(job.getDepcode())) && (j.getDepjob().equals(job.getDepjob())))) {
+                throw new RuntimeException("XML file contains duplicate keys!");
+            }
             jobsFromXml.add(job);
         }
         return jobsFromXml;
