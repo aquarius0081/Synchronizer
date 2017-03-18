@@ -10,6 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class Main {
@@ -46,12 +47,12 @@ public class Main {
     };
 
     public static void main(String[] args) throws JAXBException, IOException, SAXException, ParserConfigurationException {
-        //exportToXml();
+        exportToXml();
         syncFromXml();
     }
 
     private static void exportToXml() throws JAXBException {
-        List<Job> jobsList = DBUtil.readFromDB();
+        HashSet<Job> jobsList = DBUtil.readFromDB();
         Jobs jobs = new Jobs();
         jobs.setJobs(jobsList);
         File outXml = new File("temp/exportedXml.xml");
@@ -63,40 +64,67 @@ public class Main {
     }
 
     private static void syncFromXml() throws ParserConfigurationException, IOException, SAXException {
-        List jobsFromXml = XMLUtil.readFromXml();
-        List jobsFromDB = DBUtil.readFromDB();
-        List<String> sqlStatements = new ArrayList<String>();
+        HashSet<Job> jobsFromXml = XMLUtil.readFromXml("temp/importXml.xml");
+        HashSet<Job> jobsFromDB = DBUtil.readFromDB();
+        List<String> sqlStatements = new ArrayList<>();
 
         //Update
         jobsFromXml.forEach((x) -> {
             jobsFromDB.forEach((d) -> {
-                if (((Job) d).getDepcode().equals(((Job) x).getDepcode()) &&
-                        ((Job) d).getDepjob().equals(((Job) x).getDepjob()) &&
-                        !((Job) d).getDescription().equals(((Job) x).getDescription())) {
-                    sqlStatements.add("UPDATE [Enterprise].[dbo].[Job] SET [Description] = ? WHERE DepCode = ? AND DepJob = ?");
+                if (d.getDepcode().equals(x.getDepcode()) &&
+                        d.getDepjob().equals(x.getDepjob()) &&
+                        !d.getDescription().equals(x.getDescription())) {
+                    sqlStatements.add(
+                            String.format(
+                                    "UPDATE [Enterprise].[dbo].[Job] SET [Description] = '%s' WHERE DepCode = '%s' AND DepJob = '%s'",
+                                    x.getDescription(),
+                                    d.getDepcode(),
+                                    d.getDepjob()));
                 }
             });
         });
 
         //Insert
-        jobsFromXml.removeIf((x) -> jobsFromDB.stream().anyMatch((d) ->
-            (((Job) d).getDepcode().equals(((Job) x).getDepcode()) &&
-                    ((Job) d).getDepjob().equals(((Job) x).getDepjob()))
-        ));
-        jobsFromXml.forEach((x) -> {
-            sqlStatements.add("INSERT INTO [Enterprise].[dbo].[Job] ([DepCode], [DepJob], [Description]) VALUES (?,?,?)");
+        HashSet<Job> insertJobs = getJobsSubtraction(jobsFromXml, jobsFromDB);
+        insertJobs.forEach((x) -> {
+            sqlStatements.add(
+                    String.format(
+                            "INSERT INTO [Enterprise].[dbo].[Job] ([DepCode], [DepJob], [Description]) VALUES ('%s','%s','%s')",
+                            x.getDepcode(),
+                            x.getDepjob(),
+                            x.getDescription()));
         });
 
         //Delete
-        jobsFromDB.removeIf((db) -> jobsFromXml.stream().anyMatch((xml) ->
-                (((Job) xml).getDepcode().equals(((Job) db).getDepcode()) &&
-                        ((Job) xml).getDepjob().equals(((Job) db).getDepjob()))
-        ));
-        jobsFromDB.forEach((db) -> {
-            sqlStatements.add("DELETE FROM [Enterprise].[dbo].[Job] WHERE DepCode = ? AND DepJob = ?");
+        HashSet<Job> deleteJobs = getJobsSubtraction(jobsFromDB, jobsFromXml);
+        deleteJobs.forEach((db) -> {
+            sqlStatements.add(
+                    String.format(
+                            "DELETE FROM [Enterprise].[dbo].[Job] WHERE DepCode = '%s' AND DepJob = '%s'",
+                            db.getDepcode(),
+                            db.getDepjob()));
         });
 
         sqlStatements.forEach((s) -> System.out.println(s));
+        if (!sqlStatements.isEmpty()) {
+            DBUtil.writeToDB(sqlStatements);
+        }
+    }
+
+    private static HashSet<Job> getJobsSubtraction(HashSet<Job> jobs1, HashSet<Job> jobs2) {
+        HashSet<Job> result = new HashSet<>();
+        jobs1.forEach((job1) -> {
+            if (jobs2.stream().noneMatch((job2) ->
+                    (job2.getDepcode().equals(job1.getDepcode()) &&
+                            job2.getDepjob().equals(job1.getDepjob())))) {
+                result.add(new Job() {{
+                    setDepcode(job1.getDepcode());
+                    setDepjob(job1.getDepjob());
+                    setDescription(job1.getDescription());
+                }});
+            }
+        });
+        return result;
     }
 
 }

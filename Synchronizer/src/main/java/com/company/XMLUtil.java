@@ -10,21 +10,20 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 /**
  *
  */
 public class XMLUtil {
-    static List<Job> readFromXml() throws ParserConfigurationException, SAXException, IOException {
-        File inXml = new File("temp/exportedXml.xml");
+    static HashSet<Job> readFromXml(String path) throws ParserConfigurationException, SAXException, IOException {
+        File inXml = new File(path);
         DocumentBuilderFactory dbFactory
                 = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(inXml);
         Element jobsElement = doc.getDocumentElement();
-        List<Job> jobsFromXml = new ArrayList<Job>();
+        HashSet<Job> jobsFromXml = new HashSet<>();
         System.out.println("Root element :"
                 + doc.getDocumentElement().getNodeName());
         NodeList jobNodes = jobsElement.getElementsByTagName("Job");
