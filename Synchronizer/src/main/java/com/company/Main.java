@@ -71,9 +71,8 @@ public class Main {
         logger.info(successMessage);
         System.out.println(successMessage);
       } catch (Exception e) {
-        final String fatalErrorMessage = "Synchronization process from XML file to DB failed! Please see log for details.";
-        logger.fatal(fatalErrorMessage);
-        System.out.println(fatalErrorMessage);
+        logger.fatal("Synchronization process from XML file to DB failed!");
+        System.out.println("Synchronization process from XML file to DB failed! Please see log for details.");
       }
     }
   }
