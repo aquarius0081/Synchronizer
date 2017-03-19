@@ -16,25 +16,25 @@ import java.util.HashSet;
 /**
  *
  */
-public class XMLUtil {
+class XMLUtil {
     private final static Logger logger = Logger.getLogger(DBUtil.class);
 
     static HashSet<Job> readFromXml(final String path) {
-        File inXml = new File(path);
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        HashSet<Job> jobsFromXml = new HashSet<>();
+        final File inXml = new File(path);
+        final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        final HashSet<Job> jobsFromXml = new HashSet<>();
         try {
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(inXml);
-            Element jobsElement = doc.getDocumentElement();
+            final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            final Document doc = dBuilder.parse(inXml);
+            final Element jobsElement = doc.getDocumentElement();
 
-            NodeList jobNodes = jobsElement.getElementsByTagName("Job");
+            final NodeList jobNodes = jobsElement.getElementsByTagName("Job");
             for (int i = 0; i < jobNodes.getLength(); i++) {
-                NodeList columnNodes = jobNodes.item(i).getChildNodes();
-                Job job = new Job();
+                final NodeList columnNodes = jobNodes.item(i).getChildNodes();
+                final Job job = new Job();
                 for (int j = 0; j < columnNodes.getLength(); j++) {
                     final String columnNodeName = columnNodes.item(j).getNodeName();
-                    String columnNodeText = columnNodes.item(j).getTextContent();
+                    final String columnNodeText = columnNodes.item(j).getTextContent();
                     if (columnNodeName.equalsIgnoreCase("depcode")) {
                         job.setDepcode(columnNodeText);
                     } else if (columnNodeName.equalsIgnoreCase("depjob")) {
@@ -44,22 +44,22 @@ public class XMLUtil {
                     }
                 }
                 if (jobsFromXml.stream().anyMatch((j) -> (j.getDepcode().equals(job.getDepcode())) && (j.getDepjob().equals(job.getDepjob())))) {
-                    String fatalErrorMessage = "XML file contains duplicate keys!";
+                    final String fatalErrorMessage = "XML file contains duplicate keys!";
                     logger.fatal(fatalErrorMessage);
                     throw new RuntimeException(fatalErrorMessage);
                 }
                 jobsFromXml.add(job);
             }
         } catch (ParserConfigurationException e) {
-            String fatalErrorMessage = String.format("Fatal error during building new document for XML file: %s", e.getStackTrace());
+            final String fatalErrorMessage = String.format("Fatal error during building new document for XML file: %s", e.getMessage());
             logger.fatal(fatalErrorMessage);
             throw new RuntimeException(fatalErrorMessage);
         } catch (SAXException e) {
-            String fatalErrorMessage = String.format("Fatal error during parsing XML file: %s", e.getStackTrace());
+            final String fatalErrorMessage = String.format("Fatal error during parsing XML file: %s", e.getMessage());
             logger.fatal(fatalErrorMessage);
             throw new RuntimeException(fatalErrorMessage);
         } catch (IOException e) {
-            String fatalErrorMessage = "XML file is not found!";
+            final String fatalErrorMessage = "XML file is not found!";
             logger.fatal(fatalErrorMessage);
             throw new RuntimeException(fatalErrorMessage);
         }
