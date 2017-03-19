@@ -7,19 +7,29 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.HashSet;
 
 /**
- *
+ * Intermediate class which is used for marshalling to XML file
  */
 @XmlRootElement(name = "Jobs")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Jobs {
-    @XmlElement(name = "Job")
-    private HashSet<Job> jobs = null;
+  @XmlElement(name = "Job")
+  private HashSet<Job> jobs = null;
 
-    public HashSet<Job> getJobs() {
-        return jobs;
-    }
+  /**
+   * Getter for {@code jobs} field
+   *
+   * @return {@code jobs} field value
+   */
+  public HashSet<Job> getJobs() {
+    return jobs;
+  }
 
-    public void setJobs(HashSet<Job> jobs) {
-        this.jobs = jobs;
-    }
+  /**
+   * Setter for {@code jobs} field
+   *
+   * @param jobs value to set for {@code jobs} field
+   */
+  public void setJobs(HashSet<Job> jobs) {
+    this.jobs = jobs;
+  }
 }
