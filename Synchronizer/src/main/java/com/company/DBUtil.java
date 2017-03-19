@@ -50,7 +50,11 @@ public class DBUtil {
             sqlBatch.append("    IF @@TRANCOUNT > 0\n");
             sqlBatch.append("        ROLLBACK\n");
             sqlBatch.append("END CATCH");
-            stmt.addBatch(sqlBatch.toString());
+            final String sqlBatchStr = sqlBatch.toString();
+            stmt.addBatch(sqlBatchStr);
+            if (logger.isDebugEnabled()) {
+                logger.debug("SQL Batch to execute:\n" + sqlBatchStr);
+            }
             stmt.executeLargeBatch();
             stmt.close();
         } catch (Exception e) {

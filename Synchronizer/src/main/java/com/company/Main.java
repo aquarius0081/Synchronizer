@@ -31,31 +31,41 @@ public class Main {
     };
 
     public static void main(String[] args) {
-        try {
-            logger.info("Start export process from DB to XML file.");
-            exportToXml();
-            String successMessage = "Export process from DB to XML file completed successfully.";
-            logger.info(successMessage);
-            System.out.println(successMessage);
-        } catch (Exception e) {
-            String fatalErrorMessage = "Export process from DB to XML file failed! Please see log for details.";
-            logger.fatal(fatalErrorMessage);
-            System.out.println(fatalErrorMessage);
+        final String paramsErrorMessage = "Provided incorrect parameters! Parameters usage: export|sync fileName.xml";
+        if (args.length != 2) {
+            System.out.println(paramsErrorMessage);
+            return;
+        } else if (!args[0].equalsIgnoreCase("sync") && !args[0].equalsIgnoreCase("export")) {
+            System.out.println(paramsErrorMessage);
+            return;
         }
-        try {
-            logger.info("Start synchronization process from XML file to DB.");
-            syncFromXml();
-            String successMessage = "Synchronization process from XML file to DB completed successfully.";
-            logger.info(successMessage);
-            System.out.println(successMessage);
-        } catch (Exception e) {
-            String fatalErrorMessage = "Synchronization process from XML file to DB failed! Please see log for details.";
-            logger.fatal(fatalErrorMessage);
-            System.out.println(fatalErrorMessage);
+        if (args[0].equalsIgnoreCase("export")) {
+            try {
+                logger.info("Start export process from DB to XML file.");
+                exportToXml(args[1]);
+                String successMessage = "Export process from DB to XML file completed successfully.";
+                logger.info(successMessage);
+                System.out.println(successMessage);
+            } catch (Exception e) {
+                logger.fatal("Export process from DB to XML file failed!");
+                System.out.println("Export process from DB to XML file failed! Please see log for details.");
+            }
+        } else if (args[0].equalsIgnoreCase("sync")) {
+            try {
+                logger.info("Start synchronization process from XML file to DB.");
+                syncFromXml(args[1]);
+                String successMessage = "Synchronization process from XML file to DB completed successfully.";
+                logger.info(successMessage);
+                System.out.println(successMessage);
+            } catch (Exception e) {
+                String fatalErrorMessage = "Synchronization process from XML file to DB failed! Please see log for details.";
+                logger.fatal(fatalErrorMessage);
+                System.out.println(fatalErrorMessage);
+            }
         }
     }
 
-    private static void exportToXml() {
+    private static void exportToXml(final String path) {
         if(logger.isDebugEnabled()){
             logger.debug("Start read data from DB.");
         }
@@ -65,7 +75,7 @@ public class Main {
         }
         Jobs jobs = new Jobs();
         jobs.setJobs(jobsList);
-        File outXml = new File("temp/exportedXml.xml");
+        File outXml = new File(path);
 
         if(logger.isDebugEnabled()){
             logger.debug("Start marshalling DB data to XML file.");
@@ -81,11 +91,11 @@ public class Main {
         }
     }
 
-    private static void syncFromXml() {
+    private static void syncFromXml(final String path) {
         if(logger.isDebugEnabled()){
             logger.debug("Start read data from XML file.");
         }
-        HashSet<Job> jobsFromXml = XMLUtil.readFromXml("temp/importXml.xml");
+        HashSet<Job> jobsFromXml = XMLUtil.readFromXml(path);
         if(logger.isDebugEnabled()){
             logger.debug("Reading data from XML file completed successfully.");
             logger.debug("Start read data from DB.");
