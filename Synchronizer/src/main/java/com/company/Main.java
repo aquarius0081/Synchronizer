@@ -1,19 +1,18 @@
 package com.company;
 
-import org.xml.sax.SAXException;
+import org.apache.log4j.Logger;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 public class Main {
+    private final static Logger logger = Logger.getLogger(Main.class);
 
     private static ThreadLocal<Marshaller> marshaller = new ThreadLocal<Marshaller>() {
         @Override
@@ -31,44 +30,74 @@ public class Main {
         }
     };
 
-    private static ThreadLocal<Unmarshaller> unmarshaller = new ThreadLocal<Unmarshaller>() {
-        @Override
-        protected Unmarshaller initialValue() {
-            JAXBContext jaxbContext = null;
-            try {
-                jaxbContext = JAXBContext.newInstance(Jobs.class);
-                Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-                return unmarshaller;
-            } catch (JAXBException e) {
-                e.printStackTrace();
-            }
-            return null;
+    public static void main(String[] args) {
+        try {
+            logger.info("Start export process from DB to XML file.");
+            exportToXml();
+            String successMessage = "Export process from DB to XML file completed successfully.";
+            logger.info(successMessage);
+            System.out.println(successMessage);
+        } catch (Exception e) {
+            String fatalErrorMessage = "Export process from DB to XML file failed! Please see log for details.";
+            logger.fatal(fatalErrorMessage);
+            System.out.println(fatalErrorMessage);
         }
-    };
-
-    public static void main(String[] args) throws JAXBException, IOException, SAXException, ParserConfigurationException {
-        exportToXml();
-        syncFromXml();
+        try {
+            logger.info("Start synchronization process from XML file to DB.");
+            syncFromXml();
+            String successMessage = "Synchronization process from XML file to DB completed successfully.";
+            logger.info(successMessage);
+            System.out.println(successMessage);
+        } catch (Exception e) {
+            String fatalErrorMessage = "Synchronization process from XML file to DB failed! Please see log for details.";
+            logger.fatal(fatalErrorMessage);
+            System.out.println(fatalErrorMessage);
+        }
     }
 
-    private static void exportToXml() throws JAXBException {
+    private static void exportToXml() {
+        if(logger.isDebugEnabled()){
+            logger.debug("Start read data from DB.");
+        }
         HashSet<Job> jobsList = DBUtil.readFromDB();
+        if(logger.isDebugEnabled()){
+            logger.debug("Reading data from DB completed successfully.");
+        }
         Jobs jobs = new Jobs();
         jobs.setJobs(jobsList);
         File outXml = new File("temp/exportedXml.xml");
-        for (Job job : jobs.getJobs()) {
-            System.out.println("DepCode: " + job.getDepcode() + " DepJob: " + job.getDepjob() + " Description: " + job.getDescription());
-        }
 
-        marshaller.get().marshal(jobs, outXml);
+        if(logger.isDebugEnabled()){
+            logger.debug("Start marshalling DB data to XML file.");
+        }
+        try {
+            marshaller.get().marshal(jobs, outXml);
+        } catch (JAXBException e) {
+            logger.fatal(String.format("Fatal error during marshalling DB data to XML file: %s", e.getStackTrace()));
+            throw new RuntimeException("Fatal error during marshalling DB data to XML file");
+        }
+        if(logger.isDebugEnabled()){
+            logger.debug("Marshalling DB data to XML file completed successfully.");
+        }
     }
 
-    private static void syncFromXml() throws ParserConfigurationException, IOException, SAXException {
+    private static void syncFromXml() {
+        if(logger.isDebugEnabled()){
+            logger.debug("Start read data from XML file.");
+        }
         HashSet<Job> jobsFromXml = XMLUtil.readFromXml("temp/importXml.xml");
+        if(logger.isDebugEnabled()){
+            logger.debug("Reading data from XML file completed successfully.");
+            logger.debug("Start read data from DB.");
+        }
         HashSet<Job> jobsFromDB = DBUtil.readFromDB();
+        if(logger.isDebugEnabled()){
+            logger.debug("Reading data from DB completed successfully.");
+            logger.debug("Start forming SQL statements to sync DB data from XML file.");
+        }
         List<String> sqlStatements = new ArrayList<>();
 
-        //Update
+        //UPDATE SQL statements
         jobsFromXml.forEach((x) -> {
             jobsFromDB.forEach((d) -> {
                 if (d.getDepcode().equals(x.getDepcode()) &&
@@ -83,8 +112,11 @@ public class Main {
                 }
             });
         });
+        if(logger.isDebugEnabled()){
+            logger.debug(String.format("Forming UPDATE SQL statements completed successfully: %d statement(s)", sqlStatements.size()));
+        }
 
-        //Insert
+        //INSERT SQL statements
         HashSet<Job> insertJobs = getJobsSubtraction(jobsFromXml, jobsFromDB);
         insertJobs.forEach((x) -> {
             sqlStatements.add(
@@ -94,8 +126,11 @@ public class Main {
                             x.getDepjob(),
                             x.getDescription()));
         });
+        if(logger.isDebugEnabled()){
+            logger.debug(String.format("Forming INSERT SQL statements completed successfully: %d statement(s)", insertJobs.size()));
+        }
 
-        //Delete
+        //DELETE SQL statements
         HashSet<Job> deleteJobs = getJobsSubtraction(jobsFromDB, jobsFromXml);
         deleteJobs.forEach((db) -> {
             sqlStatements.add(
@@ -104,10 +139,22 @@ public class Main {
                             db.getDepcode(),
                             db.getDepjob()));
         });
+        if(logger.isDebugEnabled()){
+            logger.debug(String.format("Forming DELETE SQL statements completed successfully: %d statement(s)", deleteJobs.size()));
+        }
 
-        sqlStatements.forEach((s) -> System.out.println(s));
         if (!sqlStatements.isEmpty()) {
+            if(logger.isDebugEnabled()){
+                logger.debug("Start sync DB data from XML file.");
+            }
             DBUtil.writeToDB(sqlStatements);
+            if(logger.isDebugEnabled()){
+                logger.debug("Sync DB data from XML file completed successfully.");
+            }
+        } else {
+            if(logger.isInfoEnabled()){
+                logger.info("Nothing to sync!");
+            }
         }
     }
 

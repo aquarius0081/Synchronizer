@@ -1,32 +1,36 @@
 package com.company;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import org.apache.log4j.Logger;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.*;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 
 public class DBUtil {
+    private final static Logger logger = Logger.getLogger(DBUtil.class);
+
     public static HashSet<Job> readFromDB() {
         HashSet<Job> jobs = new HashSet<>();
-        try {
-            try (Connection con = getConnectionToDB()) {
-                Statement stmt = con.createStatement();
-                final ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
-                while (rs.next()) {
-
-                    jobs.add(new Job() {{
-                        setDepcode(rs.getString("DepCode"));
-                        setDepjob(rs.getString("DepJob"));
-                        setDescription(rs.getString("Description"));
-                    }});
-                }
-                rs.close();
-                stmt.close();
+        try (Connection con = getConnectionToDB()) {
+            Statement stmt = con.createStatement();
+            final ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
+            while (rs.next()) {
+                jobs.add(new Job() {{
+                    setDepcode(rs.getString("DepCode"));
+                    setDepjob(rs.getString("DepJob"));
+                    setDescription(rs.getString("Description"));
+                }});
             }
+            rs.close();
+            stmt.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.fatal(String.format("Fatal error during reading data from DB: %s", e.getStackTrace()));
+            throw new RuntimeException("Fatal error during reading data from DB!");
         }
         return jobs;
     }
@@ -50,20 +54,33 @@ public class DBUtil {
             stmt.executeLargeBatch();
             stmt.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.fatal(String.format("Fatal error during writing data to DB: %s", e.getStackTrace()));
+            throw new RuntimeException("Fatal error during writing data to DB!");
         }
     }
 
     private static Connection getConnectionToDB() {
         Connection connection = null;
         try {
+            Properties properties = new Properties();
+            InputStream input = new FileInputStream("synchronizer.properties");
+            properties.load(input);
+
             DriverManager.registerDriver(new com.microsoft.sqlserver.jdbc.SQLServerDriver());
-            String url = "jdbc:sqlserver://127.0.0.1\\EMPLOYEESLIST:1433;databaseName=Enterprise";
-            String login = "esa";
-            String password = "qweASD12#";
+            String url = properties.getProperty("db.connectionString");
+            String login = properties.getProperty("db.user");
+            String password = properties.getProperty("db.password");
             connection = DriverManager.getConnection(url, login, password);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            String fatalErrorMessage = "The synchronizer.properties file is not found!";
+            logger.fatal(fatalErrorMessage);
+            throw new RuntimeException(fatalErrorMessage);
+        } catch (IOException e) {
+            logger.fatal(String.format("Error occurred when loading from the synchronizer.properties file: ", e.getStackTrace()));
+            throw new RuntimeException("Error occurred when reading from the synchronizer.properties file!");
+        } catch (SQLException e) {
+            logger.fatal(String.format("Cannot connect to DB: %s", e.getStackTrace()));
+            throw new RuntimeException("Cannot connect to DB!");
         }
         return connection;
     }
