@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration SYSTEM
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.dialect">
+            org.hibernate.dialect.SQLServer2008Dialect
+        </property>
+        <property name="hibernate.connection.driver_class">
+            com.microsoft.sqlserver.jdbc.SQLServerDriver
+        </property>
+
+        <!-- Assume test is the database name -->
+        <property name="hibernate.connection.url">
+            jdbc:sqlserver://127.0.0.1\\EMPLOYEESLIST:1433;databaseName=Enterprise
+        </property>
+        <property name="hibernate.connection.username">
+            esa
+        </property>
+        <property name="hibernate.connection.password">
+            qweASD12#
+        </property>
+
+        <!-- List of XML mapping files -->
+        <mapping resource="Job.hbm.xml"/>
+
+    </session-factory>
+</hibernate-configuration>

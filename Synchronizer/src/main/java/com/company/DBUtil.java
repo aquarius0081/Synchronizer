@@ -1,6 +1,9 @@
 package com.company;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -90,6 +93,19 @@ class DBUtil {
     try {
       final Properties properties = new Properties();
       properties.load(new FileInputStream("synchronizer.properties"));
+      SessionFactory factory;
+      Session session = factory.openSession();
+      Transaction tx = null;
+      try {
+        tx = session.beginTransaction();
+        // do some work
+        tx.commit();
+      } catch (Exception e) {
+        if (tx != null) tx.rollback();
+        e.printStackTrace();
+      } finally {
+        session.close();
+      }
 
       DriverManager.registerDriver(new com.microsoft.sqlserver.jdbc.SQLServerDriver());
       connection = DriverManager.getConnection(properties.getProperty("db.connectionString"),
