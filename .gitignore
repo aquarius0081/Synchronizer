@@ -1,0 +1,8 @@
+# Created by .ignore support plugin (hsz.mobi)
+Synchronizer/src/main/main.iml
+synchronizer.iml
+Synchronizer/src/test/
+Synchronizer/target/
+export.xml
+logs/
+temp/

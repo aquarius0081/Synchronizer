@@ -1,14 +1,15 @@
 package com.company;
 
-import org.apache.log4j.Logger;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+
+import org.apache.log4j.Logger;
 
 
 /**
@@ -52,6 +53,7 @@ public class Main {
       System.out.println(paramsErrorMessage);
       return;
     }
+    DBUtil.connectToDB();
     if (args[0].equalsIgnoreCase("export")) {
       try {
         logger.info("Start export process from DB to XML file.");
@@ -88,7 +90,7 @@ public class Main {
       logger.debug("Start read data from DB.");
     }
     final Jobs jobs = new Jobs();
-    jobs.setJobs(DBUtil.readFromDB());
+    jobs.setJobs(DBUtil.getJobs());
     if (logger.isDebugEnabled()) {
       logger.debug("Reading data from DB completed successfully.");
     }
@@ -125,53 +127,37 @@ public class Main {
       logger.debug("Reading data from XML file completed successfully.");
       logger.debug("Start read data from DB.");
     }
-    final HashSet<Job> jobsFromDB = DBUtil.readFromDB();
+    final List<Job> jobsFromDB = DBUtil.getJobs();
     if (logger.isDebugEnabled()) {
       logger.debug("Reading data from DB completed successfully.");
       logger.debug("Start forming SQL statements to sync DB data from XML file.");
     }
     final List<String> sqlStatements = new ArrayList<>();
-
-    //UPDATE SQL statements
-    jobsFromXml.forEach((x) -> jobsFromDB.forEach((d) -> {
-      if (d.getDepcode().equals(x.getDepcode()) &&
-          d.getDepjob().equals(x.getDepjob()) &&
-          !d.getDescription().equals(x.getDescription())) {
-        sqlStatements.add(
-            String.format(
-                "UPDATE [Enterprise].[dbo].[Job] SET [Description] = '%s' WHERE DepCode = '%s' AND DepJob = '%s'",
-                x.getDescription(),
-                d.getDepcode(),
-                d.getDepjob()));
-      }
-    }));
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format("Forming UPDATE SQL statements completed successfully: %d statement(s)", sqlStatements.size()));
-    }
-
-    //INSERT SQL statements
-    final HashSet<Job> insertJobs = getJobsSubtraction(jobsFromXml, jobsFromDB);
-    insertJobs.forEach((x) -> sqlStatements.add(
-        String.format(
-            "INSERT INTO [Enterprise].[dbo].[Job] ([DepCode], [DepJob], [Description]) VALUES ('%s','%s','%s')",
-            x.getDepcode(),
-            x.getDepjob(),
-            x.getDescription())));
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format("Forming INSERT SQL statements completed successfully: %d statement(s)", insertJobs.size()));
-    }
-
-    //DELETE SQL statements
-    final HashSet<Job> deleteJobs = getJobsSubtraction(jobsFromDB, jobsFromXml);
-    deleteJobs.forEach((db) -> sqlStatements.add(
-        String.format(
-            "DELETE FROM [Enterprise].[dbo].[Job] WHERE DepCode = '%s' AND DepJob = '%s'",
-            db.getDepcode(),
-            db.getDepjob())));
-    if (logger.isDebugEnabled()) {
-      logger.debug(String.format("Forming DELETE SQL statements completed successfully: %d statement(s)", deleteJobs.size()));
-    }
-
+    /*
+     * //UPDATE SQL statements jobsFromXml.forEach((x) -> jobsFromDB.forEach((d) -> { if
+     * (d.getDepcode().equals(x.getDepcode()) && d.getDepjob().equals(x.getDepjob()) &&
+     * !d.getDescription().equals(x.getDescription())) { sqlStatements.add( String.format(
+     * "UPDATE [Enterprise].[dbo].[Job] SET [Description] = '%s' WHERE DepCode = '%s' AND DepJob = '%s'"
+     * , x.getDescription(), d.getDepcode(), d.getDepjob())); } })); if (logger.isDebugEnabled()) {
+     * logger.debug(String.
+     * format("Forming UPDATE SQL statements completed successfully: %d statement(s)",
+     * sqlStatements.size())); }
+     * 
+     * //INSERT SQL statements final HashSet<Job> insertJobs = getJobsSubtraction(jobsFromXml,
+     * jobsFromDB); insertJobs.forEach((x) -> sqlStatements.add( String.format(
+     * "INSERT INTO [Enterprise].[dbo].[Job] ([DepCode], [DepJob], [Description]) VALUES ('%s','%s','%s')"
+     * , x.getDepcode(), x.getDepjob(), x.getDescription()))); if (logger.isDebugEnabled()) {
+     * logger.debug(String.
+     * format("Forming INSERT SQL statements completed successfully: %d statement(s)",
+     * insertJobs.size())); }
+     * 
+     * //DELETE SQL statements final HashSet<Job> deleteJobs = getJobsSubtraction(jobsFromDB,
+     * jobsFromXml); deleteJobs.forEach((db) -> sqlStatements.add( String.format(
+     * "DELETE FROM [Enterprise].[dbo].[Job] WHERE DepCode = '%s' AND DepJob = '%s'",
+     * db.getDepcode(), db.getDepjob()))); if (logger.isDebugEnabled()) { logger.debug(String.
+     * format("Forming DELETE SQL statements completed successfully: %d statement(s)",
+     * deleteJobs.size())); }
+     */
     if (!sqlStatements.isEmpty()) {
       if (logger.isDebugEnabled()) {
         logger.debug("Start sync DB data from XML file.");

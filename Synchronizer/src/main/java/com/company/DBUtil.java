@@ -1,22 +1,25 @@
 package com.company;
 
+import java.sql.Connection;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Properties;
+
 import org.apache.log4j.Logger;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.sql.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
 /**
  * Utility class for working with DB table
  */
 class DBUtil {
+
+  private static SessionFactory sessionFactory;
 
   /**
    * Instance of {@link Logger} class for {@link DBUtil}
@@ -24,40 +27,16 @@ class DBUtil {
   private final static Logger logger = Logger.getLogger(DBUtil.class);
 
   /**
-   * Reads data from DB table and puts it into intermediate {@link HashSet} of {@link Job} objects
+   * Forms SQL Batch and executes it in one transaction. Rolls back changes if any error occurred
+   * during execution of SQL Batch
    *
-   * @return {@link HashSet} of {@link Job} objects
-   */
-  static HashSet<Job> readFromDB() {
-    final HashSet<Job> jobs = new HashSet<>();
-    try (final Connection con = getConnectionToDB()) {
-      final Statement stmt = con.createStatement();
-      final ResultSet rs = stmt.executeQuery("SELECT * FROM Job");
-      while (rs.next()) {
-        jobs.add(new Job() {{
-          setDepcode(rs.getString("DepCode"));
-          setDepjob(rs.getString("DepJob"));
-          setDescription(rs.getString("Description"));
-        }});
-      }
-      rs.close();
-      stmt.close();
-    } catch (Exception e) {
-      logger.fatal(String.format("Fatal error during reading data from DB: %s", e.getMessage()));
-      throw new RuntimeException("Fatal error during reading data from DB!");
-    }
-    return jobs;
-  }
-
-  /**
-   * Forms SQL Batch and executes it in one transaction.
-   * Rolls back changes if any error occurred during execution of SQL Batch
-   *
-   * @param sqlStatements list of SQL DML statements (INSERT, UPDATE, DELETE) to execute in one transaction
+   * @param sqlStatements
+   *          list of SQL DML statements (INSERT, UPDATE, DELETE) to execute in one transaction
    */
   static void writeToDB(final List<String> sqlStatements) {
-    try (final Connection con = getConnectionToDB()) {
-      final Statement stmt = con.createStatement();
+    try {
+      connectToDB();
+      final Statement stmt = null;
       final StringBuilder sqlBatch = new StringBuilder();
       sqlBatch.append("BEGIN TRY\n");
       sqlBatch.append("BEGIN TRANSACTION \n");
@@ -88,40 +67,92 @@ class DBUtil {
    *
    * @return {@link Connection} object
    */
-  private static Connection getConnectionToDB() {
-    final Connection connection;
+  public static void connectToDB() {
+    StandardServiceRegistry registry = null;
     try {
-      final Properties properties = new Properties();
-      properties.load(new FileInputStream("synchronizer.properties"));
-      SessionFactory factory;
-      Session session = factory.openSession();
-      Transaction tx = null;
-      try {
-        tx = session.beginTransaction();
-        // do some work
-        tx.commit();
-      } catch (Exception e) {
-        if (tx != null) tx.rollback();
-        e.printStackTrace();
-      } finally {
-        session.close();
-      }
-
-      DriverManager.registerDriver(new com.microsoft.sqlserver.jdbc.SQLServerDriver());
-      connection = DriverManager.getConnection(properties.getProperty("db.connectionString"),
-          properties.getProperty("db.user"),
-          properties.getProperty("db.password"));
-    } catch (FileNotFoundException e) {
-      final String fatalErrorMessage = "The synchronizer.properties file is not found!";
-      logger.fatal(fatalErrorMessage);
-      throw new RuntimeException(fatalErrorMessage);
-    } catch (IOException e) {
-      logger.fatal(String.format("Error occurred when loading from the synchronizer.properties file: %s", e.getMessage()));
-      throw new RuntimeException("Error occurred when reading from the synchronizer.properties file!");
-    } catch (SQLException e) {
-      logger.fatal(String.format("Cannot connect to DB: %s", e.getMessage()));
-      throw new RuntimeException("Cannot connect to DB!");
+      // A SessionFactory is set up once for an application!
+      registry = new StandardServiceRegistryBuilder().configure() // configures settings from
+                                                                  // hibernate.cfg.xml
+          .build();
+      sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+    } catch (Exception e) {
+      // The registry would be destroyed by the SessionFactory, but we had trouble building the
+      // SessionFactory
+      // so destroy it manually.
+      StandardServiceRegistryBuilder.destroy(registry);
     }
-    return connection;
   }
+
+
+  // /* Method to CREATE an employee in the database */
+  // public Integer addEmployee(String fname, String lname, int salary){
+  // Session session = sessionFactory.openSession();
+  // Transaction tx = null;
+  // Integer employeeID = null;
+  // try{
+  // tx = session.beginTransaction();
+  // Employee employee = new Employee(fname, lname, salary);
+  // employeeID = (Integer) session.save(employee);
+  // tx.commit();
+  // }catch (HibernateException e) {
+  // if (tx!=null) tx.rollback();
+  // e.printStackTrace();
+  // }finally {
+  // session.close();
+  // }
+  // return employeeID;
+  // }
+
+  /**
+   * Method to READ all the jobs
+   */
+  public static List getJobs() {
+    Transaction tx = null;
+    List jobs = null;
+    try (Session session = sessionFactory.openSession()) {
+      tx = session.beginTransaction();
+      jobs = session.createQuery("FROM Job").list();
+      tx.commit();
+    } catch (HibernateException e) {
+      if (tx != null)
+        tx.rollback();
+      e.printStackTrace();
+    }
+    return jobs;
+  }
+  // /* Method to UPDATE salary for an employee */
+  // public void updateEmployee(Integer EmployeeID, int salary ){
+  // Session session = factory.openSession();
+  // Transaction tx = null;
+  // try{
+  // tx = session.beginTransaction();
+  // Employee employee =
+  // (Employee)session.get(Employee.class, EmployeeID);
+  // employee.setSalary( salary );
+  // session.update(employee);
+  // tx.commit();
+  // }catch (HibernateException e) {
+  // if (tx!=null) tx.rollback();
+  // e.printStackTrace();
+  // }finally {
+  // session.close();
+  // }
+  // }
+  // /* Method to DELETE an employee from the records */
+  // public void deleteEmployee(Integer EmployeeID){
+  // Session session = factory.openSession();
+  // Transaction tx = null;
+  // try{
+  // tx = session.beginTransaction();
+  // Employee employee =
+  // (Employee)session.get(Employee.class, EmployeeID);
+  // session.delete(employee);
+  // tx.commit();
+  // }catch (HibernateException e) {
+  // if (tx!=null) tx.rollback();
+  // e.printStackTrace();
+  // }finally {
+  // session.close();
+  // }
+  // }
 }
