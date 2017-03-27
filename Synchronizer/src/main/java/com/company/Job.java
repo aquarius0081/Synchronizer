@@ -1,10 +1,14 @@
 package com.company;
 
-import javax.xml.bind.annotation.*;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+import javax.xml.bind.annotation.XmlType;
 
 /**
- * Intermediate class which is used for marshalling to XML file and as an entity to hold data from DB table row or data
- * for one XML node
+ * Intermediate class which is used for marshalling to XML file and as an entity to hold data from
+ * DB table row or data for one XML node
  */
 @XmlRootElement
 @XmlType(propOrder = {"depcode", "depjob", "description"})
@@ -15,6 +19,16 @@ public class Job {
   private String depcode;
   private String depjob;
   private String description;
+
+  public Job() {
+
+  }
+
+  public Job(String depcode, String depjob, String description) {
+    this.depcode = depcode;
+    this.depjob = depjob;
+    this.description = description;
+  }
 
   /**
    * Getter for {@code id} field
@@ -28,7 +42,8 @@ public class Job {
   /**
    * Setter for {@code id} field
    *
-   * @param id value to set for {@code id} field
+   * @param id
+   *          value to set for {@code id} field
    */
   public void setId(Long id) {
     this.id = id;
@@ -46,7 +61,8 @@ public class Job {
   /**
    * Setter for {@code depcode} field
    *
-   * @param depcode value to set for {@code depcode} field
+   * @param depcode
+   *          value to set for {@code depcode} field
    */
   public void setDepcode(String depcode) {
     this.depcode = depcode;
@@ -64,7 +80,8 @@ public class Job {
   /**
    * Setter for {@code depjob} field
    *
-   * @param depjob value to set for {@code depjob} field
+   * @param depjob
+   *          value to set for {@code depjob} field
    */
   public void setDepjob(String depjob) {
     this.depjob = depjob;
@@ -82,7 +99,8 @@ public class Job {
   /**
    * Setter for {@code description} field
    *
-   * @param description value to set for {@code description} field
+   * @param description
+   *          value to set for {@code description} field
    */
   public void setDescription(String description) {
     this.description = description;

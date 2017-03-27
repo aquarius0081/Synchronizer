@@ -1,17 +1,20 @@
 package com.company;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
 
 /**
  * Utility class for working with XML files
@@ -27,14 +30,16 @@ class XMLUtil {
    * Reads data from specified XML file using XML DOM technology and puts it into intermediate
    * {@link HashSet} of {@link Job} objects
    *
-   * @param path path to XML file
+   * @param path
+   *          path to XML file
    * @return {@link HashSet} of {@link Job} objects for further processing
-   * @throws RuntimeException if XML file contains duplicate keys
+   * @throws RuntimeException
+   *           if XML file contains duplicate keys
    */
-  static HashSet<Job> readFromXml(final String path) {
+  static List<Job> readFromXml(final String path) {
     final File inXml = new File(path);
     final DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-    final HashSet<Job> jobsFromXml = new HashSet<>();
+    final List<Job> jobsFromXml = new ArrayList<>();
     try {
       final DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
       final Document doc = dBuilder.parse(inXml);
@@ -55,7 +60,8 @@ class XMLUtil {
             job.setDescription(columnNodeText);
           }
         }
-        if (jobsFromXml.stream().anyMatch((j) -> (j.getDepcode().equals(job.getDepcode())) && (j.getDepjob().equals(job.getDepjob())))) {
+        if (jobsFromXml.stream().anyMatch((j) -> (j.getDepcode().equals(job.getDepcode()))
+            && (j.getDepjob().equals(job.getDepjob())))) {
           final String fatalErrorMessage = "XML file contains duplicate keys!";
           logger.fatal(fatalErrorMessage);
           throw new RuntimeException(fatalErrorMessage);
@@ -63,11 +69,13 @@ class XMLUtil {
         jobsFromXml.add(job);
       }
     } catch (ParserConfigurationException e) {
-      final String fatalErrorMessage = String.format("Fatal error during building new document for XML file: %s", e.getMessage());
+      final String fatalErrorMessage = String
+          .format("Fatal error during building new document for XML file: %s", e.getMessage());
       logger.fatal(fatalErrorMessage);
       throw new RuntimeException(fatalErrorMessage);
     } catch (SAXException e) {
-      final String fatalErrorMessage = String.format("Fatal error during parsing XML file: %s", e.getMessage());
+      final String fatalErrorMessage = String.format("Fatal error during parsing XML file: %s",
+          e.getMessage());
       logger.fatal(fatalErrorMessage);
       throw new RuntimeException(fatalErrorMessage);
     } catch (IOException e) {

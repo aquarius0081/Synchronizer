@@ -28,7 +28,8 @@ public class Jobs {
   /**
    * Setter for {@code jobs} field
    *
-   * @param jobs value to set for {@code jobs} field
+   * @param jobs
+   *          value to set for {@code jobs} field
    */
   public void setJobs(List<Job> jobs) {
     this.jobs = jobs;
