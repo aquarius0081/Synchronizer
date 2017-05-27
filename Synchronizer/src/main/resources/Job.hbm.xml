@@ -8,7 +8,7 @@
         <meta attribute="class-description">
             This class contains the Job detail.
         </meta>
-        <id name="id" type="int" column="id">
+        <id name="id" type="long" column="id">
             <generator class="native"/>
         </id>
         <property name="depcode" column="DepCode" type="string"/>
