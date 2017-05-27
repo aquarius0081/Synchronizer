@@ -1,5 +1,9 @@
 package com.company;
 
+
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.xml.bind.annotation.*;
 
 /**
@@ -9,12 +13,24 @@ import javax.xml.bind.annotation.*;
 @XmlRootElement
 @XmlType(propOrder = {"depcode", "depjob", "description"})
 @XmlAccessorType(XmlAccessType.FIELD)
+@Entity
+@Table( name = "Job" )
 public class Job {
   @XmlTransient
   private Long id;
   private String depcode;
   private String depjob;
   private String description;
+
+  public Job(){
+
+  }
+
+  public Job(String depcode, String depjob, String description) {
+    this.depcode = depcode;
+    this.depjob = depjob;
+    this.description = description;
+  }
 
   /**
    * Getter for {@code id} field

@@ -1,12 +1,20 @@
 package com.company;
 
 import org.apache.log4j.Logger;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -15,7 +23,8 @@ import java.util.List;
  * Main class of application. Using this application you can export data from configured DB table to XML file and
  * synchronize data from specified XML file to DB table.
  */
-public class Main {
+@SpringBootApplication
+public class Main extends SpringBootServletInitializer {
 
   /**
    * Instance of {@link Logger} class for {@link Main}
@@ -44,37 +53,39 @@ public class Main {
    * @param args arguments usage: export|sync fileName.xml
    */
   public static void main(String[] args) {
-    final String paramsErrorMessage = "Provided incorrect parameters! Parameters usage: export|sync fileName.xml";
-    if (args.length != 2) {
-      System.out.println(paramsErrorMessage);
-      return;
-    } else if (!args[0].equalsIgnoreCase("sync") && !args[0].equalsIgnoreCase("export")) {
-      System.out.println(paramsErrorMessage);
-      return;
-    }
-    if (args[0].equalsIgnoreCase("export")) {
-      try {
-        logger.info("Start export process from DB to XML file.");
-        exportToXml(args[1]);
-        final String successMessage = "Export process from DB to XML file completed successfully.";
-        logger.info(successMessage);
-        System.out.println(successMessage);
-      } catch (Exception e) {
-        logger.fatal("Export process from DB to XML file failed!");
-        System.out.println("Export process from DB to XML file failed! Please see log for details.");
-      }
-    } else if (args[0].equalsIgnoreCase("sync")) {
-      try {
-        logger.info("Start synchronization process from XML file to DB.");
-        syncFromXml(args[1]);
-        final String successMessage = "Synchronization process from XML file to DB completed successfully.";
-        logger.info(successMessage);
-        System.out.println(successMessage);
-      } catch (Exception e) {
-        logger.fatal("Synchronization process from XML file to DB failed!");
-        System.out.println("Synchronization process from XML file to DB failed! Please see log for details.");
-      }
-    }
+    SpringApplication.run(Main.class, args);
+//    DBUtil.addJob("123", "dep1", "Job1");
+//    final String paramsErrorMessage = "Provided incorrect parameters! Parameters usage: export|sync fileName.xml";
+//    if (args.length != 2) {
+//      System.out.println(paramsErrorMessage);
+//      return;
+//    } else if (!args[0].equalsIgnoreCase("sync") && !args[0].equalsIgnoreCase("export")) {
+//      System.out.println(paramsErrorMessage);
+//      return;
+//    }
+//    if (args[0].equalsIgnoreCase("export")) {
+//      try {
+//        logger.info("Start export process from DB to XML file.");
+//        exportToXml(args[1]);
+//        final String successMessage = "Export process from DB to XML file completed successfully.";
+//        logger.info(successMessage);
+//        System.out.println(successMessage);
+//      } catch (Exception e) {
+//        logger.fatal("Export process from DB to XML file failed!");
+//        System.out.println("Export process from DB to XML file failed! Please see log for details.");
+//      }
+//    } else if (args[0].equalsIgnoreCase("sync")) {
+//      try {
+//        logger.info("Start synchronization process from XML file to DB.");
+//        syncFromXml(args[1]);
+//        final String successMessage = "Synchronization process from XML file to DB completed successfully.";
+//        logger.info(successMessage);
+//        System.out.println(successMessage);
+//      } catch (Exception e) {
+//        logger.fatal("Synchronization process from XML file to DB failed!");
+//        System.out.println("Synchronization process from XML file to DB failed! Please see log for details.");
+//      }
+//    }
   }
 
   /**
@@ -209,6 +220,11 @@ public class Main {
       }
     });
     return result;
+  }
+
+  @Override
+  protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+    return application.sources(Main.class);
   }
 
 }

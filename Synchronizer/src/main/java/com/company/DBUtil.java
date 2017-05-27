@@ -1,9 +1,15 @@
 package com.company;
 
+import jdk.nashorn.internal.scripts.JO;
 import org.apache.log4j.Logger;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.cfg.Configuration;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -22,6 +28,8 @@ class DBUtil {
    * Instance of {@link Logger} class for {@link DBUtil}
    */
   private final static Logger logger = Logger.getLogger(DBUtil.class);
+
+  private static SessionFactory factory;
 
   /**
    * Reads data from DB table and puts it into intermediate {@link HashSet} of {@link Job} objects
@@ -93,19 +101,24 @@ class DBUtil {
     try {
       final Properties properties = new Properties();
       properties.load(new FileInputStream("synchronizer.properties"));
-      SessionFactory factory;
-      Session session = factory.openSession();
-      Transaction tx = null;
-      try {
-        tx = session.beginTransaction();
-        // do some work
-        tx.commit();
-      } catch (Exception e) {
-        if (tx != null) tx.rollback();
-        e.printStackTrace();
-      } finally {
-        session.close();
-      }
+//      try{
+//        factory = new Configuration().configure().buildSessionFactory();
+//      }catch (Throwable ex) {
+//        System.err.println("Failed to create sessionFactory object." + ex);
+//        throw new ExceptionInInitializerError(ex);
+//      }
+//      Session session = factory.openSession();
+//      Transaction tx = null;
+//      try {
+//        tx = session.beginTransaction();
+//        // do some work
+//        tx.commit();
+//      } catch (Exception e) {
+//        if (tx != null) tx.rollback();
+//        e.printStackTrace();
+//      } finally {
+//        session.close();
+//      }
 
       DriverManager.registerDriver(new com.microsoft.sqlserver.jdbc.SQLServerDriver());
       connection = DriverManager.getConnection(properties.getProperty("db.connectionString"),
@@ -124,4 +137,102 @@ class DBUtil {
     }
     return connection;
   }
+
+  protected static void setUp() throws Exception {
+    // A SessionFactory is set up once for an application!
+    final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
+        .configure() // configures settings from hibernate.cfg.xml
+        .build();
+    try {
+      factory = new MetadataSources( registry ).buildMetadata().buildSessionFactory();
+    }
+    catch (Exception e) {
+      // The registry would be destroyed by the SessionFactory, but we had trouble building the SessionFactory
+      // so destroy it manually.
+      StandardServiceRegistryBuilder.destroy( registry );
+    }
+  }
+  /* Method to CREATE an employee in the database */
+  public static Integer addJob(String depcode, String depjob, String description) {
+    try {
+      setUp();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    Session session = factory.openSession();
+    Transaction tx = null;
+    Integer jobID = null;
+    try {
+      tx = session.beginTransaction();
+      Job job = new Job(depcode, depjob, description);
+      jobID = (Integer) session.save(job);
+      tx.commit();
+    } catch (HibernateException e) {
+      if (tx != null) tx.rollback();
+      e.printStackTrace();
+    } finally {
+      session.close();
+    }
+    return jobID;
+  }
+
+//  /* Method to  READ all the employees */
+//  public void listEmployees() {
+//    Session session = factory.openSession();
+//    Transaction tx = null;
+//    try {
+//      tx = session.beginTransaction();
+//      List employees = session.createQuery("FROM Employee").list();
+//      for (Iterator iterator =
+//           employees.iterator(); iterator.hasNext(); ) {
+//        Employee employee = (Employee) iterator.next();
+//        System.out.print("First Name: " + employee.getFirstName());
+//        System.out.print("  Last Name: " + employee.getLastName());
+//        System.out.println("  Salary: " + employee.getSalary());
+//      }
+//      tx.commit();
+//    } catch (HibernateException e) {
+//      if (tx != null) tx.rollback();
+//      e.printStackTrace();
+//    } finally {
+//      session.close();
+//    }
+//  }
+//
+//  /* Method to UPDATE salary for an employee */
+//  public void updateEmployee(Integer EmployeeID, int salary) {
+//    Session session = factory.openSession();
+//    Transaction tx = null;
+//    try {
+//      tx = session.beginTransaction();
+//      Employee employee =
+//          (Employee) session.get(Employee.class, EmployeeID);
+//      employee.setSalary(salary);
+//      session.update(employee);
+//      tx.commit();
+//    } catch (HibernateException e) {
+//      if (tx != null) tx.rollback();
+//      e.printStackTrace();
+//    } finally {
+//      session.close();
+//    }
+//  }
+//
+//  /* Method to DELETE an employee from the records */
+//  public void deleteEmployee(Integer EmployeeID) {
+//    Session session = factory.openSession();
+//    Transaction tx = null;
+//    try {
+//      tx = session.beginTransaction();
+//      Employee employee =
+//          (Employee) session.get(Employee.class, EmployeeID);
+//      session.delete(employee);
+//      tx.commit();
+//    } catch (HibernateException e) {
+//      if (tx != null) tx.rollback();
+//      e.printStackTrace();
+//    } finally {
+//      session.close();
+//    }
+//  }
 }
