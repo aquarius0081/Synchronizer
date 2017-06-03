@@ -1,9 +1,5 @@
 package com.company;
 
-import java.sql.Connection;
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -13,10 +9,14 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 
+import java.sql.Connection;
+import java.util.List;
+import java.util.Properties;
+
 /**
  * Utility class for working with DB table
  */
-class DBUtil {
+public class DBUtil {
 
   private static SessionFactory sessionFactory;
 
@@ -92,7 +92,6 @@ class DBUtil {
     }
     return jobs;
   }
-
 
 
   /**

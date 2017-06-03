@@ -1,28 +1,18 @@
 package com.company;
 
 import org.apache.log4j.Logger;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-
-import org.apache.log4j.Logger;
 
 
 /**
@@ -57,87 +47,19 @@ public class Main extends SpringBootServletInitializer {
   /**
    * Performs 2 operations dependent on arguments either export or synchronization
    *
-   * @param args
-   *          arguments usage: export|sync fileName.xml
+   * @param args arguments usage: export|sync fileName.xml
    */
   public static void main(String[] args) {
     SpringApplication.run(Main.class, args);
-//    DBUtil.addJob("123", "dep1", "Job1");
-//    final String paramsErrorMessage = "Provided incorrect parameters! Parameters usage: export|sync fileName.xml";
-//    if (args.length != 2) {
-//      System.out.println(paramsErrorMessage);
-//      return;
-//    } else if (!args[0].equalsIgnoreCase("sync") && !args[0].equalsIgnoreCase("export")) {
-//      System.out.println(paramsErrorMessage);
-//      return;
-//    }
-//    if (args[0].equalsIgnoreCase("export")) {
-//      try {
-//        logger.info("Start export process from DB to XML file.");
-//        exportToXml(args[1]);
-//        final String successMessage = "Export process from DB to XML file completed successfully.";
-//        logger.info(successMessage);
-//        System.out.println(successMessage);
-//      } catch (Exception e) {
-//        logger.fatal("Export process from DB to XML file failed!");
-//        System.out.println("Export process from DB to XML file failed! Please see log for details.");
-//      }
-//    } else if (args[0].equalsIgnoreCase("sync")) {
-//      try {
-//        logger.info("Start synchronization process from XML file to DB.");
-//        syncFromXml(args[1]);
-//        final String successMessage = "Synchronization process from XML file to DB completed successfully.";
-//        logger.info(successMessage);
-//        System.out.println(successMessage);
-//      } catch (Exception e) {
-//        logger.fatal("Synchronization process from XML file to DB failed!");
-//        System.out.println("Synchronization process from XML file to DB failed! Please see log for details.");
-//      }
-//    }
-    final String paramsErrorMessage = "Provided incorrect parameters! Parameters usage: export|sync fileName.xml";
-    if (args.length != 2) {
-      System.out.println(paramsErrorMessage);
-      return;
-    } else if (!args[0].equalsIgnoreCase("sync") && !args[0].equalsIgnoreCase("export")) {
-      System.out.println(paramsErrorMessage);
-      return;
-    }
-    DBUtil.connectToDB();
-    if (args[0].equalsIgnoreCase("export")) {
-      try {
-        logger.info("Start export process from DB to XML file.");
-        exportToXml(args[1]);
-        final String successMessage = "Export process from DB to XML file completed successfully.";
-        logger.info(successMessage);
-        System.out.println(successMessage);
-      } catch (Exception e) {
-        logger.fatal("Export process from DB to XML file failed!");
-        System.out
-            .println("Export process from DB to XML file failed! Please see log for details.");
-      }
-    } else if (args[0].equalsIgnoreCase("sync")) {
-      try {
-        logger.info("Start synchronization process from XML file to DB.");
-        syncFromXml(args[1]);
-        final String successMessage = "Synchronization process from XML file to DB completed successfully.";
-        logger.info(successMessage);
-        System.out.println(successMessage);
-      } catch (Exception e) {
-        logger.fatal("Synchronization process from XML file to DB failed!");
-        System.out.println(
-            "Synchronization process from XML file to DB failed! Please see log for details.");
-      }
-    }
   }
 
   /**
    * Exports data from DB table to specified XML file. First reads data from DB table, puts it to
    * intermediate {@link Jobs} object then marshals that object to XML file.
    *
-   * @param path
-   *          path to XML file with exported data from DB table
+   * @param path path to XML file with exported data from DB table
    */
-  private static void exportToXml(final String path) {
+  public static void exportToXml(final String path) {
     if (logger.isDebugEnabled()) {
       logger.debug("Start read data from DB.");
     }
@@ -170,10 +92,9 @@ public class Main extends SpringBootServletInitializer {
    * execute in one transaction and executes it. If any error during this process, no data in DB
    * table will be changed.
    *
-   * @param path
-   *          path to XML file with data for synchronization
+   * @param path path to XML file with data for synchronization
    */
-  private static void syncFromXml(final String path) {
+  public static void syncFromXml(final String path) {
     if (logger.isDebugEnabled()) {
       logger.debug("Start read data from XML file.");
     }
@@ -225,10 +146,8 @@ public class Main extends SpringBootServletInitializer {
    * Performs subtraction of one {@link HashSet} of {@link Job} objects from another in other words
    * HashSet1 - HashSet2 = HashSet3
    *
-   * @param jobs1
-   *          HashSet1
-   * @param jobs2
-   *          HashSet2
+   * @param jobs1 HashSet1
+   * @param jobs2 HashSet2
    * @return new {@link HashSet} which represents subtraction of HashSet2 from HashSet1
    */
   private static List<Job> getJobsSubtraction(final List<Job> jobs1, final List<Job> jobs2) {

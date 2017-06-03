@@ -13,7 +13,7 @@
 
         <!-- Assume test is the database name -->
         <property name="hibernate.connection.url">
-            jdbc:sqlserver://127.0.0.1\\EMPLOYEESLIST:1440;databaseName=Enterprise
+            jdbc:sqlserver://127.0.0.1\EMPLOYEESLIST;databaseName=Enterprise
         </property>
         <property name="hibernate.connection.username">
             esa
